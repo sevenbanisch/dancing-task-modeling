@@ -11,5 +11,9 @@ function reward = preference(xi, xj, delta, deltarange)
 
     % alternative (linear) preference function
     difference = abs(d - delta);
-    reward = 1 - difference ./ deltarange;
+    %reward = 1 - difference ./ deltarange;
+
+    % yet another alternative function, but non-linear
+    normed_difference = difference ./ deltarange;
+    reward = (1 - normed_difference) ./ (1 + normed_difference);
 end
