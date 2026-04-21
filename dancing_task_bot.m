@@ -1,7 +1,7 @@
 function [Obs_d, Q] = dancing_task_bot(rounds, visualize)
     % Lernparameter
-    alpha = 0.5; % Q learning
-    beta = 8; % action selection
+    alpha = 0.5; % Q learning (Geschwindigkeit der Anpassung an reward)
+    beta = 8; % action selection (Exploration)
     
     % Spielfeld und Start
     d = 10; % distance to other (initial)
