@@ -1,15 +1,25 @@
-function [Obs_d, Q] = dancing_task_bot(rounds, visualize)
+function [Obs_d, Q] = dancing_task_bot(rounds, needs, visualize)
+    if nargin < 3
+        visualize = 0;
+    end
+    if nargin < 2  || isempty(needs) || needs == 0
+        needs = struct('delta', 3, 'deltarange', 2);
+    end
+
     % Lernparameter
     alpha = 0.5; % Q learning (Geschwindigkeit der Anpassung an reward)
     beta = 8; % action selection (Exploration)
     
-    % Spielfeld und Start
+    % Define "roles"
+    self = 1;
+
+    % Start
     d = 10; % distance to other (initial)
-    dmax = 20; % maximum distance
+    dmax = 20;
     
     % Preference
-    delta = 3; % preferred distance to other
-    deltarange = 2; % tolerance
+    delta = needs(self).delta; % preferred distance to other
+    deltarange = needs(self).deltarange; % tolerance
 
     % Actions
     avoid = 1;
@@ -17,6 +27,8 @@ function [Obs_d, Q] = dancing_task_bot(rounds, visualize)
     approach = 3;
     actions = [avoid, stay, approach];
     nActions = length(actions);
+    
+    moves = zeros(1, nActions);
     moves(approach) = -1; % decrease distance by one step
     moves(stay) = 0;
     moves(avoid) = +1; % increase distance by one step
@@ -179,3 +191,4 @@ function [Obs_d, Q] = dancing_task_bot(rounds, visualize)
     end
 
 end
+
