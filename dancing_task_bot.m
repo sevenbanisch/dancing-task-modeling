@@ -1,10 +1,13 @@
-function [Obs_distance] = dancing_task_bot(rounds, visualize)
+function [Obs_distance, agents] = dancing_task_bot(rounds, visualize)
     if nargin < 2
         visualize = 0;
     end
 
     % Definition of the environment
     env = struct('dmax',  22);
+
+    % Definition of environment-agent-interactions
+    moves([agent.avoid, agent.stay, agent.approach]) = [1, 0, -1];
 
     % Definition of the dyad
     dyad = struct( ...
@@ -66,7 +69,7 @@ function [Obs_distance] = dancing_task_bot(rounds, visualize)
         
             % Environment dynamics
             lastDistance = distance; % Save previous distance
-            distance = distance + agent.moves(action); % Update distance
+            distance = distance + moves(action); % Update distance
         
             % Reward
             agents{doer}.learn(distance, lastDistance, action, lastActions(doneTo));
