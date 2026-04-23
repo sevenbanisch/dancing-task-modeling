@@ -5,14 +5,31 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     % -------------------------------
     % Main plot
     % -------------------------------
-    ax1 = axes('Position', [0.10 0.11 0.68 0.815]);
+    ax1 = axes('Position', [0.10 0.11 0.64 0.815]);
     
-    plot(ax1, Obs_d, 'LineWidth', 2, 'Color', dyad.A.color)
+    plot(ax1, Obs_d, 'LineWidth', 2, 'Color', [0.5 0.5 0.5])
     ylim(ax1, [0 env.dmax])
     yticks(ax1, 0:1:env.dmax)
     hold(ax1, 'on')
-    yline(ax1, dyad.A.delta, 'r--', 'Preferred distance ('+(dyad.A.name)+')', 'LineWidth', 2)
-    yline(ax1, dyad.B.delta, 'r--', 'Preferred distance ('+(dyad.B.name)+')', 'LineWidth', 2, 'LabelVerticalAlignment', 'bottom')
+    
+    if dyad.A.delta == dyad.B.delta
+        ls = '-';
+    else
+        ls = '--';
+    end
+    yline(ax1, dyad.A.delta, ls, ...
+        ['Preferred distance (' char(dyad.A.name) ')'], ...
+        'LineWidth', 2, ...
+        'Color', dyad.A.color)
+    
+    yline(ax1, dyad.B.delta, '--', ...
+        ['Preferred distance (' char(dyad.B.name) ')'], ...
+        'LineWidth', 2, ...
+        'LabelVerticalAlignment', 'bottom', ...
+        'LabelHorizontalAlignment', 'left', ...
+        'Color', dyad.B.color)
+    
+    
     hold(ax1, 'off')
     
     legend(ax1, {'Distance'}, 'Location', 'best')
@@ -22,24 +39,43 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     % Calculate rewards
     % -------------------------------
     y = linspace(0, env.dmax, 400).';
-    reward = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), y);
-    reward = reward(:);
-    reward(~isfinite(reward)) = 0;
+    
+    rewardA = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), y);
+    rewardA = rewardA(:);
+    rewardA(~isfinite(rewardA)) = 0;
+    
+    rewardB = arrayfun(@(yy) preference(0, yy, dyad.B.delta, dyad.B.deltarange), y);
+    rewardB = rewardB(:);
+    rewardB(~isfinite(rewardB)) = 0;
+    
+    % gemeinsame Farbskalierung
+    cmax = max(abs([rewardA; rewardB]));
+    if cmax == 0
+        cmax = 1;
+    end
     
     % -------------------------------
-    % Right axis: small color bar
+    % Right side: two color bars
     % -------------------------------
-    ax2 = axes('Position', [0.82 0.11 0.03 0.815]);
-    
-    imagesc(ax2, [0 1], [y(1) y(end)], reward)
+    ax2 = axes('Position', [0.79 0.11 0.025 0.815]); % A
+    imagesc(ax2, [0 1], [y(1) y(end)], rewardA)
     set(ax2, 'YDir', 'normal')
     ylim(ax2, [0 env.dmax])
     xlim(ax2, [0 1])
-    
-    % Disable labels on these axes
     xticks(ax2, [])
     yticks(ax2, [])
     set(ax2, 'Box', 'on', 'FontSize', 12)
+    clim(ax2, [-cmax cmax])
+    
+    ax3 = axes('Position', [0.83 0.11 0.025 0.815]); % B
+    imagesc(ax3, [0 1], [y(1) y(end)], rewardB)
+    set(ax3, 'YDir', 'normal')
+    ylim(ax3, [0 env.dmax])
+    xlim(ax3, [0 1])
+    xticks(ax3, [])
+    yticks(ax3, [])
+    set(ax3, 'Box', 'on', 'FontSize', 12)
+    clim(ax3, [-cmax cmax])
     
     % -------------------------------
     % Colormap
@@ -59,35 +95,33 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     
     cmap = [red_to_yellow; yellow_to_green];
     colormap(ax2, cmap)
-    
-    cmax = max(abs(reward));
-    if cmax == 0
-        cmax = 1;
-    end
-    clim(ax2, [-cmax cmax])
+    colormap(ax3, cmap)
     
     % -------------------------------
-    % Labels right
+    % Labels above bars
     % -------------------------------
-    labelY = 0:1:env.dmax;
-    labelReward = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), labelY);
-    
-    for i = 1:numel(labelY)
-        text(ax2, 1.15, labelY(i), sprintf('%.2f', labelReward(i)), ...
-            'VerticalAlignment', 'middle', ...
-            'HorizontalAlignment', 'left', ...
-            'FontSize', 11, ...
-            'Clipping', 'off');
-    end
-    
-    text(ax2, 3.6, env.dmax/2, 'Reward', ...
-        'Rotation', 90, ...
+    text(ax2, 0.5, env.dmax + 0.6, char(dyad.A.name), ...
         'HorizontalAlignment', 'center', ...
-        'VerticalAlignment', 'middle', ...
-        'FontSize', 13, ...
+        'VerticalAlignment', 'bottom', ...
+        'FontSize', 11, ...
+        'FontWeight', 'bold', ...
+        'Color', dyad.A.color, ...
         'Clipping', 'off');
     
-    linkaxes([ax1 ax2], 'y')
+    text(ax3, 0.5, env.dmax + 0.6, char(dyad.B.name), ...
+        'HorizontalAlignment', 'center', ...
+        'VerticalAlignment', 'bottom', ...
+        'FontSize', 11, ...
+        'FontWeight', 'bold', ...
+        'Color', dyad.B.color, ...
+        'Clipping', 'off');
+    
+
+    
+    % -------------------------------
+    % Link axes
+    % -------------------------------
+    linkaxes([ax1 ax2 ax3], 'y')
     set(gcf, 'WindowStyle', 'docked')
 
 end
