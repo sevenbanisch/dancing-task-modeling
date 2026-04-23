@@ -1,5 +1,4 @@
-function plot_dancing_task(Obs_d) % version for only one dynamic agent
-    dmax = environment().dmax;
+function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agent
     figure(1)
     clf
     
@@ -8,12 +7,12 @@ function plot_dancing_task(Obs_d) % version for only one dynamic agent
     % -------------------------------
     ax1 = axes('Position', [0.10 0.11 0.68 0.815]);
     
-    plot(ax1, Obs_d, 'LineWidth', 2, 'Color', dyad().A.color)
-    ylim(ax1, [0 dmax])
-    yticks(ax1, 0:1:dmax)
+    plot(ax1, Obs_d, 'LineWidth', 2, 'Color', dyad.A.color)
+    ylim(ax1, [0 env.dmax])
+    yticks(ax1, 0:1:env.dmax)
     hold(ax1, 'on')
-    yline(ax1, dyad().A.delta, 'r--', 'Preferred distance ('+(dyad().A.name)+')', 'LineWidth', 2)
-    yline(ax1, dyad().B.delta, 'r--', 'Preferred distance ('+(dyad().B.name)+')', 'LineWidth', 2, 'LabelVerticalAlignment', 'bottom')
+    yline(ax1, dyad.A.delta, 'r--', 'Preferred distance ('+(dyad.A.name)+')', 'LineWidth', 2)
+    yline(ax1, dyad.B.delta, 'r--', 'Preferred distance ('+(dyad.B.name)+')', 'LineWidth', 2, 'LabelVerticalAlignment', 'bottom')
     hold(ax1, 'off')
     
     legend(ax1, {'Distance'}, 'Location', 'best')
@@ -22,8 +21,8 @@ function plot_dancing_task(Obs_d) % version for only one dynamic agent
     % -------------------------------
     % Calculate rewards
     % -------------------------------
-    y = linspace(0, dmax, 400).';
-    reward = arrayfun(@(yy) preference(0, yy, dyad().A.delta, dyad().A.deltarange), y);
+    y = linspace(0, env.dmax, 400).';
+    reward = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), y);
     reward = reward(:);
     reward(~isfinite(reward)) = 0;
     
@@ -34,7 +33,7 @@ function plot_dancing_task(Obs_d) % version for only one dynamic agent
     
     imagesc(ax2, [0 1], [y(1) y(end)], reward)
     set(ax2, 'YDir', 'normal')
-    ylim(ax2, [0 dmax])
+    ylim(ax2, [0 env.dmax])
     xlim(ax2, [0 1])
     
     % Disable labels on these axes
@@ -70,8 +69,8 @@ function plot_dancing_task(Obs_d) % version for only one dynamic agent
     % -------------------------------
     % Labels right
     % -------------------------------
-    labelY = 0:1:dmax;
-    labelReward = arrayfun(@(yy) preference(0, yy, dyad().A.delta, dyad().A.deltarange), labelY);
+    labelY = 0:1:env.dmax;
+    labelReward = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), labelY);
     
     for i = 1:numel(labelY)
         text(ax2, 1.15, labelY(i), sprintf('%.2f', labelReward(i)), ...
@@ -81,7 +80,7 @@ function plot_dancing_task(Obs_d) % version for only one dynamic agent
             'Clipping', 'off');
     end
     
-    text(ax2, 3.6, dmax/2, 'Reward', ...
+    text(ax2, 3.6, env.dmax/2, 'Reward', ...
         'Rotation', 90, ...
         'HorizontalAlignment', 'center', ...
         'VerticalAlignment', 'middle', ...

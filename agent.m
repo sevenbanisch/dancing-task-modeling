@@ -20,11 +20,17 @@ classdef agent < handle
 
     methods
         % Constructor
-        function obj = agent(individual)
+        function obj = agent(individual, env)
             obj.identity = individual.name;
             obj.delta = individual.delta;
             obj.deltarange = individual.deltarange;
-            obj.Q = zeros(length(agent.actions), environment().dmax + 1, length(agent.actions)); 
+            obj.Q = zeros(length(agent.actions), env.dmax + 1, length(agent.actions)); 
+        end
+
+        % Returns a Gaussian reward for how close the distance between two points is to a desired value.
+        % TODO: refactor preference function into this method
+        function reward = preference(obj, distance)
+            reward = preference(0, distance, obj.delta, obj.deltarange);
         end
         
         % Behavior
@@ -37,12 +43,12 @@ classdef agent < handle
         end
         
         % Learning
-        function learn(obj, distance, distance_old, action_self, action_other) 
+        function learn(obj, distance, distance_previous, action_self, action_other) 
             % Reward
-            r = preference(0, distance, obj.delta, obj.deltarange); 
+            r = obj.preference(distance); 
         
             % Q-learning
-            obj.Q(action_self, distance_old + 1, action_other) = (1 - obj.alpha) * obj.Q(action_self, distance_old + 1, action_other) + obj.alpha * r;
+            obj.Q(action_self, distance_previous + 1, action_other) = (1 - obj.alpha) * obj.Q(action_self, distance_previous + 1, action_other) + obj.alpha * r;
         end
     end
 end

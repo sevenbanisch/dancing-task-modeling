@@ -1,6 +1,6 @@
 classdef bot < agent
     methods
-        function obj = agent(individual)
+        function obj = agent(individual, ~)
             obj.identity = individual.name;
         end
         
