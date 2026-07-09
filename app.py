@@ -38,7 +38,9 @@ valid_trials = (
     .filter(lambda x: len(x) >= min_moves and len(x) <= max_moves)
 )
 
-
+st.sidebar.info(
+    "Number of trials: {}".format(len(valid_trials))
+)
 
 
 fig, ax = plt.subplots(figsize=(6, 4))
