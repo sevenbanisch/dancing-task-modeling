@@ -9,6 +9,23 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     isBotB = isfield(dyad.B, 'class') && endsWith(lower(string(dyad.B.class)), "bot");
 
     % -------------------------------
+    % Preference mode fallback
+    % -------------------------------
+    defaultPrefMode = "normdif";
+
+    if isfield(dyad.A, 'pref_mode') && ~isempty(dyad.A.pref_mode)
+        prefModeA = dyad.A.pref_mode;
+    else
+        prefModeA = defaultPrefMode;
+    end
+
+    if isfield(dyad.B, 'pref_mode') && ~isempty(dyad.B.pref_mode)
+        prefModeB = dyad.B.pref_mode;
+    else
+        prefModeB = defaultPrefMode;
+    end
+
+    % -------------------------------
     % Main plot
     % -------------------------------
     ax1 = axes('Position', [0.10 0.11 0.64 0.815]);
@@ -57,7 +74,9 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     colors = {};
 
     if ~isBotA
-        rewardA = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), y);
+        rewardA = arrayfun(@(yy) preference( ...
+            0, yy, dyad.A.delta, dyad.A.deltarange, prefModeA), y);
+
         rewardA = rewardA(:);
         rewardA(~isfinite(rewardA)) = 0;
 
@@ -67,7 +86,9 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     end
 
     if ~isBotB
-        rewardB = arrayfun(@(yy) preference(0, yy, dyad.B.delta, dyad.B.deltarange), y);
+        rewardB = arrayfun(@(yy) preference( ...
+            0, yy, dyad.B.delta, dyad.B.deltarange, prefModeB), y);
+
         rewardB = rewardB(:);
         rewardB(~isfinite(rewardB)) = 0;
 
@@ -114,7 +135,8 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
 
         for i = 1:numel(rewards)
 
-            axBar = axes('Position', [barX0 + (i-1)*barGap 0.11 barWidth 0.815]);
+            axBar = axes('Position', ...
+                [barX0 + (i-1)*barGap 0.11 barWidth 0.815]);
 
             imagesc(axBar, [0 1], [y(1) y(end)], rewards{i})
             set(axBar, 'YDir', 'normal')
