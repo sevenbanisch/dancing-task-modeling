@@ -62,24 +62,97 @@ classdef agent < handle
 
         % HELPER FUNCTIONS
         function displayQ(obj, action_other)
-            % Set default values if arguments are not provided
-            if nargin < 2
-                action_other = agent.stay;
+        
+            colWidth = 16;
+            idxWidth = 6;
+        
+            selfActions  = [agent.avoid, agent.stay, agent.approach];
+            otherActions = [agent.avoid, agent.stay, agent.approach];
+        
+            selfLabels  = ["self.avoid", "self.stay", "self.approach"];
+            otherLabels = ["other avoid", "other stay", "other approach"];
+        
+            fmtCell = ['%-' num2str(colWidth) 's'];
+            fmtIdx  = ['%-' num2str(idxWidth) 's'];
+        
+            % ------------------------------------------------------------
+            % Case 1: action_other is provided -> old compact table
+            % ------------------------------------------------------------
+            if nargin >= 2
+        
+                A = squeeze(obj.Q(:, :, action_other))';
+                idx = (0:size(A, 1)-1)';
+        
+                T = array2table([idx A], ...
+                    'VariableNames', [{'#'}, cellstr(["avoid", "stay", "approach"])]);
+        
+                disp(T)
+                return
             end
         
-            % Extract the matrix and transpose it
-            A = squeeze(obj.Q(:, :, action_other))';
+            % ------------------------------------------------------------
+            % Case 2: no action_other provided -> grouped display
+            % ------------------------------------------------------------
+            nDistances = size(obj.Q, 2);
         
-            % Create index column: 0, 1, 2, ...
-            idx = (0:size(A,1)-1)';
+            fprintf('\n')
         
-            % Create table with column names
-            T = array2table([idx A], ...
-                'VariableNames', [{'#'}, cellstr(obj.actionLabels)]);
+            % First header row: other-action groups
+            fprintf(fmtIdx, '#')
         
-            % Display the result
-            disp(T)
+            for o = 1:3
+                groupWidth = 3 * colWidth;
+                label = char(otherLabels(o));
+        
+                padding = groupWidth - strlength(label);
+                leftPad = floor(padding / 2);
+                rightPad = ceil(padding / 2);
+        
+                fprintf('%s%s%s', ...
+                    repmat(' ', 1, leftPad), ...
+                    label, ...
+                    repmat(' ', 1, rightPad));
+            end
+        
+            fprintf('\n')
+        
+            % Second header row: self actions
+            fprintf(fmtIdx, '')
+        
+            for o = 1:3
+                for s = 1:3
+                    fprintf(fmtCell, char(selfLabels(s)))
+                end
+            end
+        
+            fprintf('\n')
+        
+            % Separator
+            fprintf('%s\n', repmat('-', 1, idxWidth + 9 * colWidth))
+        
+            % Data rows
+            for d = 1:nDistances
+        
+                fprintf(fmtIdx, sprintf('%d', d - 1))
+        
+                for o = 1:3
+                    for s = 1:3
+        
+                        val = obj.Q(selfActions(s), d, otherActions(o));
+        
+                        % Robust formatting: number -> string -> fixed-width cell
+                        fprintf(fmtCell, sprintf('%.4f', val))
+        
+                    end
+                end
+        
+                fprintf('\n')
+            end
+        
+            fprintf('\n')
         
         end
+        %
+
     end
 end
