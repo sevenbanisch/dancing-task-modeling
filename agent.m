@@ -4,6 +4,7 @@ classdef agent < handle
 
         delta % Preferred distance
         deltarange % Tolerance window
+        pref_mode = "normdif" % mode of the preference function ("exp", "normdif", "abs")
         
         Q % Q-matrix
         beta = 8  % Action selection (Exploration)
@@ -39,7 +40,8 @@ classdef agent < handle
         % Returns a Gaussian reward for how close the distance between two points is to a desired value.
         % TODO: refactor preference function into this method
         function reward = preference(obj, distance)
-            reward = preference(0, distance, obj.delta, obj.deltarange);
+            obj.pref_mode
+            reward = preference(0, distance, obj.delta, obj.deltarange,obj.pref_mode);
         end
         
         % Behavior

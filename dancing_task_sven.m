@@ -1,16 +1,21 @@
-function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
+function [Obs_d, Q] = dancing_task_sven(rounds, visualize)
+
+    N = 2;
+    pref_mode = "exp";
+
     % Lernparameter
     alpha = 0.25; % Q learning
     beta = 8; % action selection
     
     % Spielfeld und Start
-    d = 8; % distance to other (initial)
-    dmax = 12; % maximum distance
+    d = 10; % distance to other (initial)
+    dmax = 22; % maximum distance
     
     % Preference
-    delta = 0; % preferred distance to other
-    deltarange = 5; % tolerance
-    pref_mode = "exp";
+    % delta = 0; % preferred distance to other
+    % deltarange = 2; % tolerance
+    delta = [1,12];
+    deltarange = 3;
 
     % Actions
     avoid = 1;
@@ -23,7 +28,7 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
     moves(avoid) = +1; % increase distance by one step
     
     %% Initialize Q matrix (first dim: agent; here: only S)
-    Q = zeros(1, nActions, dmax+1, nActions); 
+    Q = zeros(N, nActions, dmax+1, nActions); 
     % Alternative initial conditions
     % Q = -ones(1, nActions, dmax+1, nActions); 
     
@@ -38,19 +43,18 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
     
     % Loop
     for round = 2:rounds
-        %action_other = 1;
-        %d = d+actions(action_other);
-    
-        %% A: action selection
-        % A1: conditional on distance and other action
-        %expQ = exp(beta * Q(1, :, d+1, action_other)); % Note: d+1 -> map distance to array index (d=0 -> index=1)
-        % A2: conditional only on distance
-        expQ = exp(beta * Q(1, :, d+1, 1)); % Note: d+1 -> map distance to array index (d=0 -> index=1)
 
-        %choice = randsample(nActions, 1, true, expQ); % Choose action depending on Q values
-        % Alternative to randsample
-        edges = cumsum(expQ)/sum(expQ);
-        choice = sum(rand > edges) + 1;
+        %% A: Agent choice (random turn taking)
+        agentIX = randi(2);
+        otherIX = 3-agentIX;
+    
+        %% B: Action selection
+        expQ = exp(beta * Q(agentIX,:,d+1,otherIX));
+        %choice = randsample(nActions,1,true,expQ);
+        cdfs = cumsum(expQ./sum(expQ,2),2);
+        for i = 1:nActions
+           choice = find(cdfs(:) >= rand(), 1);
+        end
         
         % constrain range
         if d == dmax && choice == avoid % If action would lead out of range...
@@ -60,43 +64,39 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
             choice = stay; % .. change it to stay
         end
     
-        % B: Environment dynamics
+        %% C: Environment dynamics
         %[d,choice,moves(choice)]
         dOld = d; % Previous distance
         d = d + moves(choice); % Update distance
         
         %feedback_other = -1; % Signaling dissatisfaction
         %feedback_other = 1; % Signaling satisfaction
-        feedback_other = randi(3)-2; % Random Signaling 
+        %feedback_other = randi(3)-2; % Random Signaling 
     
-        % C: Rewards
-        rSelf = preference(0, d, delta, deltarange,pref_mode);
-        rOther = feedback_other;
+        %% D: Rewards
+        rSelf = preference(0, d, delta(agentIX), deltarange,pref_mode);
+        %rOther = feedback_other;
 
         %mu = 0.5;
-        r = mu * rSelf + (1-mu)*rOther;
+        %r = mu * rSelf + (1-mu)*rOther;
+        r = rSelf;
 
-        %[d,r]
-    
-        % Q-learning
-        % Q(1, choice, dOld+1, action_other) = (1 - alpha) * Q(1, choice, dOld + 1, action_other) + alpha * r;
-    
-        % Adjustment for A2
-        Q(1, choice, dOld+1, 1) = (1 - alpha) * Q(1, choice, dOld + 1, 1) + alpha * r;
+      
+        %% E: Q-learning
+        co = lastChoices(otherIX);
+        Q(agentIX, choice, dOld+1,co) = (1-alpha)*Q(agentIX, choice, dOld+1,co) + alpha * r;
 
-
-        lastChoices(1) = choice; % last choice of self
-        lastChoices(2) = action_other;
+        lastChoices(agentIX) = choice;
     
         % Model Observable
         Obs_d(round, 1) = d;
     
-        % "Hack": change distance to other at t=100
-        if((round == 100) && (d == delta))
-            d = 7;
-            
-            
-        end
+        % % "Hack": change distance to other at t=100
+        % if((round == 100) && (d == delta))
+        %     d = 7;
+        % 
+        % 
+        % end
 
     end % rounds
     
@@ -116,7 +116,8 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
         ylim(ax1, [0 dmax])
         yticks(ax1, 0:1:dmax)
         hold(ax1, 'on')
-        yline(ax1, delta, 'r--', 'Preferred distance', 'LineWidth', 2)
+        yline(ax1, delta(1), 'r--', 'Alice', 'LineWidth', 2)
+        yline(ax1, delta(2), 'g--', 'Bob', 'LineWidth', 2)
         hold(ax1, 'off')
         
         legend(ax1, {'Distance'}, 'Location', 'best')
@@ -126,7 +127,7 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
         % Calculate rewards
         % -------------------------------
         y = linspace(0, dmax, 400).';
-        reward = arrayfun(@(yy) preference(0, yy, delta, deltarange,pref_mode), y);
+        reward = arrayfun(@(yy) preference(0, yy, delta(1), deltarange,pref_mode), y);
         reward = reward(:);
         reward(~isfinite(reward)) = 0;
         
@@ -134,13 +135,13 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
         % Right axis: small color bar
         % -------------------------------
         ax2 = axes('Position',[0.82 0.11 0.03 0.815]);
-        
+
         % Reward as vertical color bar
         imagesc(ax2, [0 1], [y(1) y(end)], reward)
         set(ax2, 'YDir', 'normal')
         ylim(ax2, [0 dmax])
         xlim(ax2, [0 1])
-        
+
         % Diasable labels on these axes
         xticks(ax2, [])
         yticks(ax2, [])
@@ -176,7 +177,7 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
         % Labels right
         % -------------------------------
         labelY = 0:1:dmax;
-        labelReward = arrayfun(@(yy) preference(0, yy, delta, deltarange,pref_mode), labelY);
+        labelReward = arrayfun(@(yy) preference(0, yy, delta(1), deltarange,pref_mode), labelY);
         
         for i = 1:numel(labelY)
             text(ax2, 1.15, labelY(i), sprintf('%.2f', labelReward(i)), ...
