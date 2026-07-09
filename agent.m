@@ -4,7 +4,7 @@ classdef agent < handle
 
         delta % Preferred distance
         deltarange % Tolerance window
-        pref_mode = "normdif" % mode of the preference function ("exp", "normdif", "abs")
+        pref_mode % mode of the preference function ("exp", "normdif", "abs")
         
         Q % Q-matrix
         beta = 8  % Action selection (Exploration)
@@ -32,6 +32,7 @@ classdef agent < handle
         % Constructor
         function obj = agent(individual, env)
             obj.identity = individual.name;
+            obj.pref_mode = individual.pref_mode
             obj.delta = individual.delta;
             obj.deltarange = individual.deltarange;
             obj.Q = zeros(length(agent.actions), env.dmax + 1, length(agent.actions)); 
