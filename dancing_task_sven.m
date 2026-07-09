@@ -68,17 +68,9 @@ function [Obs_d, Q] = dancing_task_sven(rounds, visualize)
         %[d,choice,moves(choice)]
         dOld = d; % Previous distance
         d = d + moves(choice); % Update distance
-        
-        %feedback_other = -1; % Signaling dissatisfaction
-        %feedback_other = 1; % Signaling satisfaction
-        %feedback_other = randi(3)-2; % Random Signaling 
     
         %% D: Rewards
         rSelf = preference(0, d, delta(agentIX), deltarange,pref_mode);
-        %rOther = feedback_other;
-
-        %mu = 0.5;
-        %r = mu * rSelf + (1-mu)*rOther;
         r = rSelf;
 
       
