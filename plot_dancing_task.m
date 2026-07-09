@@ -1,6 +1,8 @@
 function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agent
     figure(1)
     clf
+
+    pref_mode = "normdif";
     
     % -------------------------------
     % Main plot
@@ -40,11 +42,11 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     % -------------------------------
     y = linspace(0, env.dmax, 400).';
     
-    rewardA = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange), y);
+    rewardA = arrayfun(@(yy) preference(0, yy, dyad.A.delta, dyad.A.deltarange,dyad.A.pref_mode), y);
     rewardA = rewardA(:);
     rewardA(~isfinite(rewardA)) = 0;
     
-    rewardB = arrayfun(@(yy) preference(0, yy, dyad.B.delta, dyad.B.deltarange), y);
+    rewardB = arrayfun(@(yy) preference(0, yy, dyad.B.delta, dyad.B.deltarange,dyad.B.pref_mode), y);
     rewardB = rewardB(:);
     rewardB(~isfinite(rewardB)) = 0;
     
