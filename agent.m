@@ -41,7 +41,7 @@ classdef agent < handle
         % TODO: refactor preference function into this method
         function reward = preference(obj, distance)
             obj.pref_mode
-            reward = preference(0, distance, obj.delta, obj.deltarange,obj.pref_mode);
+            reward = preference(0, distance, obj.delta, obj.deltarange, obj.pref_mode);
         end
         
         % Behavior
