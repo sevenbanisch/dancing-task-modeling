@@ -8,7 +8,7 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
     dmax = 12; % maximum distance
     
     % Preference
-    delta = 3; % preferred distance to other
+    delta = 0; % preferred distance to other
     deltarange = 2; % tolerance
 
     % Actions
@@ -65,8 +65,8 @@ function [Obs_d, Q] = dancing_task_bot_feedback(rounds, mu, visualize)
         d = d + moves(choice); % Update distance
         
         %feedback_other = -1; % Signaling dissatisfaction
-        feedback_other = 1; % Signaling satisfaction
-        %feedback_other = randi(3)-2; % Random Signaling 
+        %feedback_other = 1; % Signaling satisfaction
+        feedback_other = randi(3)-2; % Random Signaling 
     
         % C: Rewards
         rSelf = preference(0, d, delta, deltarange);
