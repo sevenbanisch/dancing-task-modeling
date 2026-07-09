@@ -32,7 +32,7 @@ classdef agent < handle
         % Constructor
         function obj = agent(individual, env)
             obj.identity = individual.name;
-            obj.pref_mode = individual.pref_mode
+            obj.pref_mode = individual.pref_mode;
             obj.delta = individual.delta;
             obj.deltarange = individual.deltarange;
             obj.Q = zeros(length(agent.actions), env.dmax + 1, length(agent.actions)); 
@@ -41,7 +41,6 @@ classdef agent < handle
         % Returns a Gaussian reward for how close the distance between two points is to a desired value.
         % TODO: refactor preference function into this method
         function reward = preference(obj, distance)
-            obj.pref_mode
             reward = preference(0, distance, obj.delta, obj.deltarange, obj.pref_mode);
         end
         
