@@ -1,21 +1,28 @@
-
-% Example: plot reward vs. distance
-delta = 8;        % preferred distance
-deltarange = 5.5;   % tolerance
-dMax = 22;
-d = linspace(0,dMax,2000);   % distances
-mode = "exp";
-
-% Evaluate preference by placing xi at 0 and xj at d
-xi = 0;
-r = arrayfun(@(dj) preference(xi, dj, delta, deltarange,mode), d);
-
-
-figure(2)
-plot(d, r, 'LineWidth', 2);
-xlabel('|xi - xj|'); ylabel('reward'); title('Preference function');
-xline(delta, '--', 'preferred distance'); grid on; 
-xlim([0,dMax])
+function plot_preference_function(delta, deltarange, dMax, mode)
+    if nargin < 1
+        delta = 8;
+    end
+    if nargin < 2
+        deltarange = 5.5;
+    end
+    if nargin < 3
+        dMax = 22;
+    end
+    if nargin < 4
+        mode = "exp";
+    end
+    
+    d = linspace(0, dMax, 2000);
+    
+    xi = 0;
+    r = arrayfun(@(dj) preference(xi, dj, delta, deltarange, mode), d);
+    
+    figure(2)
+    plot(d, r, 'LineWidth', 2);
+    xlabel('|xi - xj|'); ylabel('reward'); title('Preference function');
+    xline(delta, '--', 'preferred distance'); grid on;
+    xlim([0, dMax])
+end
 
 % figure(3)
 % % Preference R(xi,xj) on discrete positions 1..9
