@@ -124,6 +124,6 @@ function plot_dancing_task(Obs_d, dyad, env) % version for only one dynamic agen
     % Link axes
     % -------------------------------
     linkaxes([ax1 ax2 ax3], 'y')
-    set(gcf, 'WindowStyle', 'docked')
+    %set(gcf, 'WindowStyle', 'docked')
 
 end
