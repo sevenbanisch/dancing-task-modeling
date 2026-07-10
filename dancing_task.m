@@ -1,4 +1,4 @@
-function [Obs, agents] = dancing_task(rounds, visualize, verbose)
+function [Obs, agents] = dancing_task(rounds, visualize, verbose, dyad)
     if nargin < 2
         visualize = 0;
     end
@@ -7,7 +7,10 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
         verbose = 0;
     end
 
-
+    % Definition of the dyad
+    if nargin < 4 || isempty(dyad)
+        dyad = construct_dyad();
+    end
 
     % Definition of the environment
     env = struct('dmax', 20);
@@ -55,7 +58,7 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
         zeros(nTurns + 1, 1), ...      % round
         zeros(nTurns + 1, 1), ...      % turn
         zeros(nTurns + 1, 1), ...      % distance
-        zeros(nTurns + 1, 1), ...      % activeAgent
+        zeros(nTurns + 1, 1), ...      % activeAgentIndex
         NaN(nTurns + 1, 1), ...        % action
         NaN(nTurns + 1, 1), ...        % lastActionOther
         NaN(nTurns + 1, 1), ...        % reward
