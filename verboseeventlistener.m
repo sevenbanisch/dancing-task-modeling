@@ -1,11 +1,21 @@
 classdef verboseeventlistener < eventlistener
 
+    properties
+        dyad
+        env
+    end
+
     methods
 
-        function simulation_started(~, event)
+        function obj = verboseeventlistener(dyad, env)
+            obj.dyad = dyad;
+            obj.env = env;
+        end
+
+        function simulation_started(obj, ~, ~)
 
             fprintf('\nTurn-by-turn trace for first agent: %s\n', ...
-                char(event.dyad.A.name));
+                char(obj.dyad.A.name));
 
             fprintf('--------------------------------------------------------------------------------------\n');
 
@@ -22,29 +32,36 @@ classdef verboseeventlistener < eventlistener
 
         end
 
-        function step(~, event)
+        function step(obj, Obs, obsIndex)
 
-            % Turn-by-turn output only for first agent
-            if event.doer == event.A
+            row = Obs(obsIndex, :);
 
-                actionLabels = agent.actionLabels();
-
-                fprintf('%-6d %-12s %-14d %-14s %-14s %-14d %-12.4f', ...
-                    event.round, ...
-                    char(event.dyad.A.name), ...
-                    event.seenDistance, ...
-                    actionLabels(event.seenOtherAction), ...
-                    actionLabels(event.action), ...
-                    event.distance, ...
-                    event.reward);
-
-                input('', 's');
-
+            % Only first agent
+            if row.activeAgentIndex ~= obj.dyad.A.index
+                return
             end
+
+            actionLabels = agent.actionLabels();
+
+            seenDistance = Obs.distance(obsIndex - 1);
+            seenOtherAction = row.lastActionOther;
+            action = row.action;
+            reward = row.reward;
+
+            fprintf('%-6d %-12s %-14d %-14s %-14s %-14d %-12.4f', ...
+                row.round, ...
+                char(obj.dyad.A.name), ...
+                seenDistance, ...
+                actionLabels(seenOtherAction), ...
+                actionLabels(action), ...
+                row.distance, ...
+                reward);
+
+            input('', 's');
 
         end
 
-        function simulation_ended(~, ~)
+        function simulation_ended(~, ~, ~)
 
             fprintf('--------------------------------------------------------------------------------------\n\n');
 

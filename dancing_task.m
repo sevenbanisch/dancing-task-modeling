@@ -7,14 +7,7 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
         verbose = 0;
     end
 
-    % -------------------------------
-    % Event listeners
-    % -------------------------------
-    eventListeners = {};
 
-    if verbose
-        eventListeners{end+1} = verboseeventlistener();
-    end
 
     % Definition of the environment
     env = struct('dmax', 20);
@@ -24,6 +17,15 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
 
     % Definition of the dyad
     dyad = construct_dyad();
+
+    % -------------------------------
+    % Event listeners
+    % -------------------------------
+    eventListeners = {};
+
+    if verbose
+        eventListeners{end+1} = verboseeventlistener(dyad, env);
+    end
 
     %'character', "avoidant" "neutral" "anxious" "disorganised"
     
@@ -76,15 +78,13 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
     
     obsIndex = 1;
 
-    notify_event(eventListeners, "simulation_started", struct( ...
-        'dyad', dyad, ...
-        'env', env ...
-    ));
+    notify_event(eventListeners, "simulation_started", Obs, obsIndex);
     
     
     % Loop
     for round = 1:rounds % Round
-        notify_event(eventListeners, "round_started", struct( 'round', round ));
+        notify_event(eventListeners, "round_started", Obs, obsIndex);
+
         for doer = [A B] % Turns
             % Agent roles (turn taking)
             if(doer == A)
@@ -125,28 +125,6 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
             end
 
 
-            % Turn-by-turn output only for first agent
-            event = struct( ...
-                'round', round, ...
-                'obsIndex', obsIndex, ...
-                'doer', doer, ...
-                'doneTo', doneTo, ...
-                'env', env, ...
-                'dyad', dyad, ...
-                'agents', {agents}, ...
-                'A', A, ...
-                'B', B, ...
-                'seenDistance', seenDistance, ...
-                'seenOtherAction', seenOtherAction, ...
-                'action', action, ...
-                'lastDistance', lastDistance, ...
-                'distance', distance, ...
-                'reward', reward, ...
-                'lastActions', lastActions ...
-            );
-            
-            notify_event(eventListeners, "step", event);
-
             % Reward
             agents{doer}.learn(distance, lastDistance, action, lastActions(doneTo));
         
@@ -161,11 +139,13 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
             Obs.action(obsIndex) = action;
             Obs.lastActionOther(obsIndex) = seenOtherAction;
             Obs.reward(obsIndex) = reward;
+
+            notify_event(eventListeners, "step", Obs, obsIndex);
         end % turns
-        notify_event(eventListeners, "round_ended", struct( 'round', round));
+        notify_event(eventListeners, "round_ended", Obs, obsIndex);
     end % rounds
 
-    notify_event(eventListeners, "simulation_ended", struct());
+    notify_event(eventListeners, "simulation_ended", Obs, obsIndex);
 
     %% Visualization
     if visualize
@@ -174,7 +154,7 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
 
 end
 
-function notify_event(eventListeners, eventName, event)
+function notify_event(eventListeners, eventName, Obs, obsIndex)
 
     if isempty(eventListeners)
         return
@@ -187,19 +167,19 @@ function notify_event(eventListeners, eventName, event)
         switch string(eventName)
 
             case "simulation_started"
-                listener.simulation_started(event);
+                listener.simulation_started(Obs, obsIndex);
 
             case "simulation_ended"
-                listener.simulation_ended(event);
+                listener.simulation_ended(Obs, obsIndex);
 
             case "round_started"
-                listener.round_started(event);
+                listener.round_started(Obs, obsIndex);
 
             case "round_ended"
-                listener.round_ended(event);
+                listener.round_ended(Obs, obsIndex);
 
             case "step"
-                listener.step(event);
+                listener.step(Obs, obsIndex);
 
             otherwise
                 warning("Unknown event: %s", eventName);
