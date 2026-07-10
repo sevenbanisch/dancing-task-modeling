@@ -41,7 +41,7 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             'mean_distance_preference_diff', NaN, ...
             'sum_abs_distance_preference_diff', 0, ...
             'mean_abs_distance_preference_diff', NaN, ...
-            'steps_until_preferredDistance', NaN, ...
+            'turns_until_preferredDistance', NaN, ...
             'n_turns', 0 ...
         );
     end
@@ -55,7 +55,7 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             'mean_distance_preference_diff', NaN, ...
             'sum_abs_distance_preference_diff', 0, ...
             'mean_abs_distance_preference_diff', NaN, ...
-            'steps_until_preferredDistance', NaN, ...
+            'turns_until_preferredDistance', NaN, ...
             'n_turns', 0 ...
         );
     end
@@ -68,8 +68,12 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
     lastActions(B) = agent.stay;
     
     % Observables
-    Obs_distance = zeros(rounds, 1);
+    nTurns = rounds * 2;
+    
+    Obs_distance = zeros(nTurns + 1, 1);
     Obs_distance(1) = distance;
+    
+    obsIndex = 1;
 
     if verbose
         fprintf('\nTurn-by-turn trace for first agent: %s\n', char(dyad.A.name));
@@ -80,7 +84,7 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
     end
     
     % Loop
-    for round = 2:rounds % Round
+    for round = 1:rounds % Round
         for doer = [A B] % Turns
             % Agent roles (turn taking)
             if(doer == A)
@@ -106,9 +110,6 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
                 action = agent.stay; % .. change it to stay
                 % @TODO: counter
             end
-
-            % Reward of the acting agent at the new distance
-            reward = agents{doer}.preference(distance);
         
             % Environment dynamics
             lastDistance = distance; % Save previous distance
@@ -134,10 +135,10 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             
                 aggregates.A.n_turns = aggregates.A.n_turns + 1;
             
-                if isnan(aggregates.A.steps_until_preferredDistance) && ...
+                if isnan(aggregates.A.turns_until_preferredDistance) && ...
                         distance == dyad.A.delta % abs(distance - dyad.A.delta) <= dyad.A.deltarange
             
-                    aggregates.A.steps_until_preferredDistance = aggregates.A.n_turns;
+                    aggregates.A.turns_until_preferredDistance = aggregates.A.n_turns;
                 end
             
             elseif doer == B && ~isBotB
@@ -155,10 +156,10 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             
                 aggregates.B.n_turns = aggregates.B.n_turns + 1;
             
-                if isnan(aggregates.B.steps_until_preferredDistance) && ...
+                if isnan(aggregates.B.turns_until_preferredDistance) && ...
                         distance == dyad.A.delta % abs(distance - dyad.B.delta) <= dyad.B.deltarange
             
-                    aggregates.B.steps_until_preferredDistance = aggregates.B.n_turns;
+                    aggregates.B.turns_until_preferredDistance = aggregates.B.n_turns;
                 end
             
             end
@@ -182,7 +183,8 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             lastActions(doer) = action; % last choice of self
         
             % Model Observable
-            Obs_distance(round, 1) = distance;
+            obsIndex = obsIndex + 1;
+            Obs_distance(obsIndex, 1) = distance;
         end % turns
     end % rounds
     
