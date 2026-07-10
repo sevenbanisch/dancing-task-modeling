@@ -7,9 +7,18 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
         verbose = 0;
     end
 
-    % Definition of the environment
-    env = struct('dmax',  20);
+    % -------------------------------
+    % Event listeners
+    % -------------------------------
+    eventListeners = {};
 
+    if verbose
+        eventListeners{end+1} = verboseeventlistener();
+    end
+
+    % Definition of the environment
+    env = struct('dmax', 20);
+    
     % Definition of environment-agent-interactions
     moves([agent.avoid, agent.stay, agent.approach]) = [1, 0, -1];
 
@@ -75,16 +84,15 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
     
     obsIndex = 1;
 
-    if verbose
-        fprintf('\nTurn-by-turn trace for first agent: %s\n', char(dyad.A.name));
-        fprintf('--------------------------------------------------------------------------------------\n');
-        fprintf('%-6s %-12s %-14s %-14s %-14s %-14s %-12s\n', ...
-            'Round', 'Agent', 'Sees dist', 'Sees other', 'Final', 'New dist', 'Reward');
-        fprintf('--------------------------------------------------------------------------------------\n');
-    end
+    notify_event(eventListeners, "simulation_started", struct( ...
+        'dyad', dyad, ...
+        'env', env ...
+    ));
+    
     
     % Loop
     for round = 1:rounds % Round
+        notify_event(eventListeners, "round_started", struct( 'round', round ));
         for doer = [A B] % Turns
             % Agent roles (turn taking)
             if(doer == A)
@@ -157,7 +165,7 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
                 aggregates.B.n_turns = aggregates.B.n_turns + 1;
             
                 if isnan(aggregates.B.turns_until_preferredDistance) && ...
-                        distance == dyad.A.delta % abs(distance - dyad.B.delta) <= dyad.B.deltarange
+                        distance == dyad.B.delta % abs(distance - dyad.B.delta) <= dyad.B.deltarange
             
                     aggregates.B.turns_until_preferredDistance = aggregates.B.n_turns;
                 end
@@ -165,17 +173,27 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             end
 
             % Turn-by-turn output only for first agent
-            if verbose && doer == A
-                fprintf('%-6d %-12s %-14d %-14s %-14s %-14d %-12.4f', ...
-                    round, ...
-                    char(dyad.A.name), ...
-                    seenDistance, ...
-                    actionLabels(seenOtherAction), ...
-                    actionLabels(action), ...
-                    distance, ...
-                    reward);
-                input('', 's');
-            end
+            event = struct( ...
+                'round', round, ...
+                'obsIndex', obsIndex, ...
+                'doer', doer, ...
+                'doneTo', doneTo, ...
+                'env', env, ...
+                'dyad', dyad, ...
+                'agents', {agents}, ...
+                'A', A, ...
+                'B', B, ...
+                'seenDistance', seenDistance, ...
+                'seenOtherAction', seenOtherAction, ...
+                'action', action, ...
+                'lastDistance', lastDistance, ...
+                'distance', distance, ...
+                'reward', reward, ...
+                'lastActions', lastActions, ...
+                'aggregates', aggregates ...
+            );
+            
+            notify_event(eventListeners, "step", event);
 
             % Reward
             agents{doer}.learn(distance, lastDistance, action, lastActions(doneTo));
@@ -186,12 +204,11 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             obsIndex = obsIndex + 1;
             Obs_distance(obsIndex, 1) = distance;
         end % turns
+        notify_event(eventListeners, "round_ended", struct( 'round', round));
     end % rounds
     
 
-    if verbose
-        fprintf('--------------------------------------------------------------------------------------\n\n');
-    end
+    notify_event(eventListeners, "simulation_ended", struct());
 
     %% Visualization
     if visualize
@@ -224,4 +241,40 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
         aggregates.B.mean_abs_distance_preference_diff = ...
             aggregates.B.sum_abs_distance_preference_diff / aggregates.B.n_turns;
     end
+end
+
+function notify_event(eventListeners, eventName, event)
+
+    if isempty(eventListeners)
+        return
+    end
+
+    for i = 1:numel(eventListeners)
+
+        listener = eventListeners{i};
+
+        switch string(eventName)
+
+            case "simulation_started"
+                listener.simulation_started(event);
+
+            case "simulation_ended"
+                listener.simulation_ended(event);
+
+            case "round_started"
+                listener.round_started(event);
+
+            case "round_ended"
+                listener.round_ended(event);
+
+            case "step"
+                listener.step(event);
+
+            otherwise
+                warning("Unknown event: %s", eventName);
+
+        end
+
+    end
+
 end
