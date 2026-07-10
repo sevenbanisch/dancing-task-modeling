@@ -74,7 +74,7 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
     Obs.round(1) = 0;
     Obs.turn(1) = 0;
     Obs.distance(1) = distance;
-    Obs.activeAgentIndex(1) = -1;
+    Obs.activeAgentIndex(1) = NaN;
     
     obsIndex = 1;
 
@@ -83,7 +83,7 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
     
     % Loop
     for round = 1:rounds % Round
-        notify_event(eventListeners, "round_started", Obs, obsIndex);
+        notify_event(eventListeners, "round_started");
 
         for doer = [A B] % Turns
             % Agent roles (turn taking)
@@ -98,11 +98,10 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
             end
             
             % What the acting agent sees
-            seenDistance = distance;
             seenOtherAction = lastActions(doneTo);
 
             % Action selection
-            action = agents{doer}.act(distance, lastActions(doneTo));
+            action = agents{doer}.act(distance, seenOtherAction);
             
             % constrain range
             if distance == env.dmax && action == agent.avoid % If action would lead out of range...
@@ -140,6 +139,7 @@ function [Obs, agents] = dancing_task(rounds, visualize, verbose)
             Obs.lastActionOther(obsIndex) = seenOtherAction;
             Obs.reward(obsIndex) = reward;
 
+            % Step completed: learning and observation update are done
             notify_event(eventListeners, "step", Obs, obsIndex);
         end % turns
         notify_event(eventListeners, "round_ended", Obs, obsIndex);
@@ -173,7 +173,7 @@ function notify_event(eventListeners, eventName, Obs, obsIndex)
                 listener.simulation_ended(Obs, obsIndex);
 
             case "round_started"
-                listener.round_started(Obs, obsIndex);
+                listener.round_started();
 
             case "round_ended"
                 listener.round_ended(Obs, obsIndex);

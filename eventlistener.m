@@ -8,7 +8,7 @@ classdef eventlistener < handle
         function simulation_ended(~, ~, ~)
         end
 
-        function round_started(~, ~, ~)
+        function round_started(~)
         end
 
         function round_ended(~, ~, ~)
