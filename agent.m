@@ -7,8 +7,8 @@ classdef agent < handle
         pref_mode % mode of the preference function ("exp", "normdif", "abs")
         
         Q % Q-matrix
-        beta = 8  % Action selection (Exploration)
-        alpha = 0.5 % Q-learning (Geschwindigkeit der Anpassung an reward)
+        beta = 6  % Action selection (Exploration)
+        alpha = 0.25 % Q-learning (Geschwindigkeit der Anpassung an reward)
     end
     
     % Only actions
@@ -35,13 +35,20 @@ classdef agent < handle
             obj.pref_mode = individual.pref_mode;
             obj.delta = individual.delta;
             obj.deltarange = individual.deltarange;
-            obj.Q = zeros(length(agent.actions), env.dmax + 1, length(agent.actions)); 
+            obj.Q = rand(length(agent.actions), env.dmax + 1, length(agent.actions))*0.0; 
         end
 
         % Returns a Gaussian reward for how close the distance between two points is to a desired value.
         % TODO: refactor preference function into this method
         function reward = preference(obj, distance)
             reward = preference(0, distance, obj.delta, obj.deltarange, obj.pref_mode);
+        end
+
+        function reward = preference_fbo(obj, distance, feedback_other)
+            mu = 0.75;
+            rd = preference(0, distance, obj.delta, obj.deltarange, obj.pref_mode);
+
+            reward = mu * rd + (1-mu)*feedback_other;
         end
         
         % Behavior
@@ -57,6 +64,14 @@ classdef agent < handle
         function learn(obj, distance, distance_previous, action_self, action_other) 
             % Reward
             r = obj.preference(distance); 
+        
+            % Q-learning
+            obj.Q(action_self, distance_previous + 1, action_other) = (1 - obj.alpha) * obj.Q(action_self, distance_previous + 1, action_other) + obj.alpha * r;
+        end
+
+        function learn_fbo(obj, distance, distance_previous, action_self, action_other,feedback_other) 
+            % Reward
+            r = obj.preference_fbo(distance,feedback_other); 
         
             % Q-learning
             obj.Q(action_self, distance_previous + 1, action_other) = (1 - obj.alpha) * obj.Q(action_self, distance_previous + 1, action_other) + obj.alpha * r;
