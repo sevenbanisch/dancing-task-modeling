@@ -41,6 +41,7 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             'mean_distance_preference_diff', NaN, ...
             'sum_abs_distance_preference_diff', 0, ...
             'mean_abs_distance_preference_diff', NaN, ...
+            'steps_until_preferredDistance', NaN, ...
             'n_turns', 0 ...
         );
     end
@@ -54,6 +55,7 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             'mean_distance_preference_diff', NaN, ...
             'sum_abs_distance_preference_diff', 0, ...
             'mean_abs_distance_preference_diff', NaN, ...
+            'steps_until_preferredDistance', NaN, ...
             'n_turns', 0 ...
         );
     end
@@ -115,9 +117,12 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
             % -------------------------------
             % Aggregates for non-bot agents
             % -------------------------------
-            reward = agents{doer}.preference(distance);
+            reward = NaN;
             
             if doer == A && ~isBotA
+            
+                reward = agents{doer}.preference(distance);
+            
                 distancePreferenceDiff = distance - dyad.A.delta;
                 absDistancePreferenceDiff = abs(distancePreferenceDiff);
             
@@ -126,9 +131,19 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
                     aggregates.A.sum_distance_preference_diff + distancePreferenceDiff;
                 aggregates.A.sum_abs_distance_preference_diff = ...
                     aggregates.A.sum_abs_distance_preference_diff + absDistancePreferenceDiff;
+            
                 aggregates.A.n_turns = aggregates.A.n_turns + 1;
             
+                if isnan(aggregates.A.steps_until_preferredDistance) && ...
+                        distance == dyad.A.delta % abs(distance - dyad.A.delta) <= dyad.A.deltarange
+            
+                    aggregates.A.steps_until_preferredDistance = aggregates.A.n_turns;
+                end
+            
             elseif doer == B && ~isBotB
+            
+                reward = agents{doer}.preference(distance);
+            
                 distancePreferenceDiff = distance - dyad.B.delta;
                 absDistancePreferenceDiff = abs(distancePreferenceDiff);
             
@@ -137,7 +152,15 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
                     aggregates.B.sum_distance_preference_diff + distancePreferenceDiff;
                 aggregates.B.sum_abs_distance_preference_diff = ...
                     aggregates.B.sum_abs_distance_preference_diff + absDistancePreferenceDiff;
+            
                 aggregates.B.n_turns = aggregates.B.n_turns + 1;
+            
+                if isnan(aggregates.B.steps_until_preferredDistance) && ...
+                        distance == dyad.A.delta % abs(distance - dyad.B.delta) <= dyad.B.deltarange
+            
+                    aggregates.B.steps_until_preferredDistance = aggregates.B.n_turns;
+                end
+            
             end
 
             % Turn-by-turn output only for first agent
@@ -185,6 +208,8 @@ function [Obs_distance, agents, aggregates] = dancing_task(rounds, visualize, ve
     
         aggregates.A.mean_abs_distance_preference_diff = ...
             aggregates.A.sum_abs_distance_preference_diff / aggregates.A.n_turns;
+
+        
     end
     
     if isfield(aggregates, 'B') && aggregates.B.n_turns > 0
